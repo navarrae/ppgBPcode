@@ -26,7 +26,7 @@ from sklearn.metrics import mean_squared_error
 
 torch.manual_seed(1)
 
-ppg_data = pd.read_csv('ppg_train.csv')
+ppg_data = pd.read_csv('cleaned_further.csv')
 num_data_points = ppg_data.shape
 print("There are", num_data_points, "data points.")
 
@@ -35,13 +35,15 @@ print("There are", num_data_points, "data points.")
 #bp = torch.tensor(ppg_data['sbp'].values,dtype = torch.float32)
 
 
-ppg = torch.tensor(ppg_data[['max1', 'min1', 'max2','min2', 'max3', 'min3']].values,dtype=torch.float32)
-bp = torch.tensor(ppg_data['dbp'].values,dtype = torch.float32)
+ppg = torch.tensor(ppg_data[['a','b','c','f','g','h','i','j','k','l','m','n','o','p','q','r','s']].values,dtype=torch.float32)
+bp_systolic = torch.tensor(ppg_data['d'].values,dtype = torch.float32)
+bp_diastolic = torch.tensor(ppg_data['e'].values,dtype = torch.float32)
 
-valid = pd.read_csv('ppg_valid.csv')
-ppg_val = torch.tensor(valid[['max1', 'min1', 'max2','min2', 'max3', 'min3']].values,dtype=torch.float32)
+#valid = pd.read_csv('ppg_valid.csv')
+#ppg_val = torch.tensor(valid[['a','b','c','f','g','h','i','j','k','l','m','n','o','p','q','r','s']].values,dtype=torch.float32)
 
-expected = torch.tensor(valid['sbp'].values,dtype = torch.float32)
+#bps_expected = torch.tensor(valid['d'].values,dtype = torch.float32)
+#bpd_expected = torch.tensor(valid['e'].values,dtype = torch.float32)
 
 #print(ppg)
 #print(bp)
@@ -49,15 +51,16 @@ expected = torch.tensor(valid['sbp'].values,dtype = torch.float32)
 class DeepNeuralNetwork(torch.nn.Module):
      def __init__(self):
         super(DeepNeuralNetwork, self).__init__()
-        self.lin1 = torch.nn.Linear(6,100)
-        self.lin2 = torch.nn.Linear(100,1)
+        self.lin1 = torch.nn.Linear(17,200)
+        self.lin2 = torch.nn.Linear(200,500)
+        self.lin3 = torch.nn.Linear(500,1)
         #self.lin3 = torch.nn.Linear(200,1)
      def forward(self, x):
         x = self.lin1(x)
         x = torch.relu(x)
         x = self.lin2(x)
-        #x = torch.relu(x)
-        #x = self.lin3(x)
+        x = torch.relu(x)
+        x = self.lin3(x)
         return x
 
 dl_model = DeepNeuralNetwork()
@@ -70,18 +73,19 @@ arr1a = []
 arr1b = []
 arr2a = []
 arr2b = []
-for epoch in range(500000): 
+
+for epoch in range(10000): 
   # TODO: fill in the blanks with your own code! 
     # resets the information from last time
     optimizer.zero_grad()
     # calculates the predictions
     pred_y = dl_model(ppg)
-    pred_y_valid = dl_model(ppg_val)
+    #pred_y_valid = dl_model(ppg_val)
     #print(pred_y)
     pred_y = pred_y.flatten()
     # calculates the loss
-    loss = criterion(pred_y, bp)
-    loss_valid = criterion(pred_y_valid, expected)
+    loss = criterion(pred_y, bp_systolic)
+    #loss_valid = criterion(pred_y_valid, expected)
     # gradient descent, part 1
     loss.backward()
     # gradient descent, part 2
@@ -91,13 +95,14 @@ for epoch in range(500000):
       arr1a.append(epoch)
       arr1b.append(loss.item())
       arr2a.append(epoch)
-      arr2b.append(loss_valid.item())
+      #arr2b.append(loss_valid.item())
 
     # print loss every 500 epochs
-    if epoch % 5000 == 0:
+    if epoch % 2 == 0:
         #print(pred_y)
         print(f"{epoch}:{loss.item()}")
-        print(f"{epoch}:{loss_valid.item()}")
+        #print(f"{epoch}:{loss_valid.item()}")
+
 
 '''
 fig = plt.figure()
@@ -123,6 +128,3 @@ plt.plot(arr1a,arr2b)
 plt.savefig('validation loss')
 torch.save(dl_model.state_dict(), 'state_dict')
 '''
-
-
-
